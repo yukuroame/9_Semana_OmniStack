@@ -12,14 +12,25 @@ const app = express();
 const server = http.Server(app);
 const io = socketio(server);
 
-io.on('connection', socket => {
-  console.log('Usuário conectado!', socket.id);
-});
+const connectedUsers = {};
 
 mongoose.connect('mongodb+srv://omnistack:omnistack@omnistack-aeopw.mongodb.net/semana09?retryWrites=true&w=majority', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
+
+io.on('connection', socket => {
+  const { user_id } = socket.handshake.query;
+
+  connectedUsers[user_id] = socket.id;
+});
+
+app.use((req, res, next) => {
+  req.io = io;
+  req.connectedUsers = connectedUsers;
+
+  return next();
+})
 
 // Métodos mais importantes de um API REST: GET (buscar informação), POST (criar informação), PUT (editar alguma informação), DELETE
 
